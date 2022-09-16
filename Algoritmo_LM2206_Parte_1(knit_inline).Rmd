@@ -1,0 +1,521 @@
+---
+title: "I. ANÁLISIS FACTORIAL EXPLORATORIO - LM 2206"
+editor_options:
+  chunk_output_type: inline
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+# PARTE 1. INSTALACIÓN DE PAQUETES Y LIBRERÍAS
+##Cargar librerías
+```{r}
+library(mice)
+library(dplyr)
+library(tidyverse)
+library(FactoMineR)
+library(factoextra)
+library(ggplot2)
+library(corrplot)
+```
+
+# PARTE 2. EXTRACCIÓN Y RECODIFICACIÓN DE VARIABLES
+
+## 2.1 Seleccionar y recodificar variables de la base de datos maestra
+### 2.1.1 Cargar base de datos maestra
+```{r}
+ENAPROCE_muestra <- read.csv("ENAPROCE_muestra.csv", 
+                             header=TRUE, sep=",", 
+                             row.names=NULL) #Sustituir ENAPROCE_muestra por base de datos ENAPROCE
+```
+
+### 2.1.2 Seleccionar y recodificar variables de interés para el estudio
+```{r}
+print("2.1.2 Seleccionar y recodificar variables de interés para el estudio") 
+phddb <-ENAPROCE_muestra %>% 
+  select(P33,
+         P36,
+         P37,
+         P38,
+         P39,
+         P16,
+         P14_1B,
+         P14_2B,
+         P14_3B,
+         P14_4B,
+         P19_2B,
+         P19_2_1B,
+         P34_7,
+         P34_1,
+         P34_2,
+         P34_3,
+         P34_4,
+         P34_5,
+         P34_6,
+         P35_7,
+         P35_1,
+         P35_2,
+         P35_3,
+         P35_4,
+         P35_5,
+         P35_6,
+         P70,
+         P72,
+         P73,
+         P76_3,
+         P20_5, 
+         P29_2, 
+         P30_2, 
+         P80_5B, 
+         P2_0A, 
+         P2_1B, 
+         P2_2B, 
+         P2_3B, 
+         P21B, 
+         P24_0
+         ) %>%
+  mutate(P33 = recode(P33,
+                      '1' = 'Monitorea 1-2 KPI',
+                      '2' = 'Monitorea 3-5 KPI',
+                      '3' = 'Monitorea 6-9 KPI',
+                      '4' = 'Monitorea 10 o más KPI',
+                      '5' = 'No monitorea KPI'
+                      )) %>% 
+  mutate(P36 = recode(P36,
+                      '1' = 'Tableros KPI en un lugar visible',
+                      '2' = 'Tableros KPI en lugares múltiples',
+                      '3' = 'No tableros KPI'
+                      )) %>% 
+  mutate(P37 = recode(P37,
+                      '1' = 'Objetivos CP (>1 año)',
+                      '2' = 'Objetivos LP (>1 año)',
+                      '3' = 'Combinación objetivos CP+LP',
+                      '4' = 'No hubo objetivos'
+                      )) %>% 
+  mutate(P38 = recode(P38,
+                      '1' = 'Alcanzó objetivos sin mucho esfuerzo',
+                      '2' = 'Alcanzó objetivos con cierto esfuerzo',
+                      '3' = 'Alcanzó objetivos con esfuerzo normal',
+                      '4' = 'Alcanzó objetivos con esfuerzo mayor al normal',
+                      '5' = 'Alcanzó objetivos esfuerzo extraordinario'
+                      )) %>%
+  mutate(P39 = recode(P39,
+                      '1' = 'Solo directivos conocían objetivos',
+                      '2' = 'Mayoría gerentes y algunos operativos conocían objetivos',
+                      '3' = 'Mayoría gerentes y mayoría operativos conocían objetivos',
+                      '4' = 'Todos gerentes y  mayoría operativos conocían objetivos'
+                      )) %>% 
+  mutate(P16 = recode(P16,
+                      '1' = 'NO Disciplina',
+                      '2' = 'NO Habilidades analíticas',
+                      '3' = 'NO Iniciativa',
+                      '4' = 'NO Capacidad resolver problemas',
+                      '5' = 'NO Calidad educativa (carencia)',
+                      '6' = 'NO encuentra con carrera que necesita',
+                      '7' = 'NO hay carencia','8' = 'OTRA carencia'
+                      )) %>%
+  mutate(P34_7 = recode(P34_7,
+                        '1' = 'Gerentes NUNCA revisan KPI',
+                        '2' = 'Gerentes SI revisan KPI'
+                        )) %>%
+  mutate(P34_1 = recode(P34_1,
+                        '1' = 'Gerentes SI revisan KPI ANUAL ',
+                        '2' = 'Gerentes NO revisan ANUAL KPI'
+                        )) %>% 
+  mutate(P34_2 = recode(P34_2,
+                        '1' = 'Gerentes SI revisan KPI TRIMESTRAL',
+                        '2' = 'Gerentes NO revisan KPI TRIMESTRAL'
+                        )) %>% 
+  mutate(P34_3 = recode(P34_3,
+                        '1' = 'Gerentes SI revisan KPI MENSUAL',
+                        '2' = 'Gerentes NO revisan KPI MENSUAL'
+                        )) %>% 
+  mutate(P34_4 = recode(P34_4,
+                        '1' = 
+                          'Gerentes SI revisan KPI SEMANAL ',
+                        '2' = 'Gerentes NO revisan KPI SEMANAL'
+                        )) %>% 
+  mutate(P34_5 = recode(P34_5,
+                        '1' = 'Gerentes SI revisan KPI DIARIO',
+                        '2' = 'Gerentes NO revisan KPI DIARIO'
+                        )) %>% 
+  mutate(P34_6 = recode(P34_6,
+                        '1' = 'Gerentes SI revisan KPI >=HORA',
+                        '2' = 'Gerentes NO revisan KPI >=HORA'
+                        )) %>% 
+  mutate(P35_7 = recode(P35_7,
+                        '1' = 'No-Gerentes NUNCA revisan KPI',
+                        '2' = 'No-Gerentes SI revisan KPI'
+                        )) %>%
+  mutate(P35_1 = recode(P35_1,
+                        '1' = 'No-Gerentes SI revisan KPI ANUAL ',
+                        '2' = 'No-Gerentes NO revisan ANUAL KPI'
+                        )) %>% 
+  mutate(P35_2 = recode(P35_2,
+                        '1' = 'No-Gerentes SI revisan KPI TRIMESTRAL',
+                        '2' = 'No-Gerentes NO revisan KPI TRIMESTRAL'
+                        )) %>% 
+  mutate(P35_3 = recode(P35_3,
+                        '1' = 'No-Gerentes SI revisan KPI MENSUAL',
+                        '2' = 'No-Gerentes NO revisan KPI MENSUAL'
+                        )) %>% 
+  mutate(P35_4 = recode(P35_4,
+                        '1' = 'No-Gerentes SI revisan KPI SEMANAL ',
+                        '2' = 'No-Gerentes NO revisan KPI SEMANAL'
+                        )) %>% 
+  mutate(P35_5 = recode(P35_5,
+                        '1' = 'No-Gerentes SI revisan KPI DIARIO',
+                        '2' = 'No-Gerentes NO revisan KPI DIARIO'
+                        )) %>% 
+  mutate(P35_6 = recode(P35_6,
+                        '1' = 'No-Gerentes SI revisan KPI >=HORA',
+                        '2' = 'No-Gerentes NO revisan KPI >=HORA'
+                        )) %>% 
+  mutate(P70 = recode(P70,
+                      '1' = 'SI usa equipo de cómputo',
+                      '2' = 'NO usa equipo de cómputo'
+                      )) %>%
+  mutate(P73 = recode(P73,
+                      '1' = 'SI usa internet',
+                      '2' = 'NO usa internet'
+                      )) %>%
+  mutate(P76_3 = recode(P76_3,
+                        '1' = '>5x/año adapta tech para eficientar',
+                        '2' = '2-5x/año adapta tech para eficientar',
+                        '3' = '1x/año adapta tech para eficientar',
+                        '4' = '<1x/año adapta tech para eficientar',
+                        '5' = 'Nunca adapta tech para eficientar'
+                        ))
+```
+
+```{r}
+#Exportar dataset con variables recodificadas
+write.csv(phddb, file='2.1.3_phddb.csv')
+```
+
+## 2.2 Preparar el dataset para luego imputar
+### 2.2.1 Transformar las variables en factores o numéricos
+```{r}
+print("2.2.1 Transformar las variables en factores o numéricos")
+phd.trans <- phddb %>% 
+    mutate(
+      P33 = as.factor(P33),
+      P36 = as.factor(P36),
+      P37 = as.factor(P37),
+      P38 = as.factor(P38),
+      P39 = as.factor(P39),
+      P16 = as.factor(P16),
+      P14_1B = as.numeric(P14_1B),
+      P14_2B = as.numeric(P14_2B),
+      P14_3B = as.numeric(P14_3B),
+      P14_4B = as.numeric(P14_4B),
+      P19_2B = as.numeric(P19_2B),
+      P19_2_1B = as.numeric(P19_2_1B),
+      P34_1 = as.factor(P34_1),
+      P34_2 = as.factor(P34_2),
+      P34_3 = as.factor(P34_3),
+      P34_4 = as.factor(P34_4),
+      P34_5 = as.factor(P34_5),
+      P34_6 = as.factor(P34_6),
+      P34_7 = as.factor(P34_7),
+      P35_1 = as.factor(P35_1),
+      P35_2 = as.factor(P35_2),
+      P35_3 = as.factor(P35_3),
+      P35_4 = as.factor(P35_4),
+      P35_5 = as.factor(P35_5),
+      P35_6 = as.factor(P35_6),
+      P35_7 = as.factor(P35_7),
+      P70 = as.factor(P70),
+      P72 = as.numeric(P72),
+      P73 = as.factor(P73),
+      P76_3 = as.factor(P76_3),
+      P20_5 = as.numeric(P20_5),
+      P29_2 = as.numeric(P29_2),
+      P30_2 = as.numeric(P30_2),
+      P80_5B = as.numeric(P80_5B),
+      P2_0A = as.numeric(P2_0A),
+      P2_1B = as.numeric(P2_1B),
+      P2_2B = as.numeric(P2_2B),
+      P2_3B = as.numeric(P2_3B),
+      P21B = as.numeric(P21B),
+      P24_0 = as.numeric(P24_0)
+    )
+```
+### 2.2.2 Verificar e imprimir la estructura del dataset
+```{r}
+print("2.2.2 Verificar e imprimir la estructura del dataset")
+str(phd.trans)
+```
+
+## 2.3 Imputar el dataset copn el paquete 'mice'
+### 2.3.1 Llamar paquete 'mice'
+Algoritmo que usa información de otras variables en el conjunto de datos para predecir e imputar los valores faltantes.
+```{r}
+print("2.3.1 Llamar paquete 'mice")
+init = mice(phd.trans, 
+            maxit=0)
+meth = init$method
+predM = init$predictorMatrix
+```
+
+```{r}
+write.csv(predM, file='2.3.1_Matriz_prediccion.csv') # Exportar matriz de predicción
+```
+
+### 2.3.2 Especificar  métodos para imputar valores faltantes (NA)
+```{r}
+print("2.3.2 Especificar  métodos para imputar valores faltantes (NA)")
+meth [c ("P33")] = "polr" 
+meth [c ("P36")] = "polyreg"
+meth [c ("P37")] = "polyreg"
+meth [c ("P38")] = "polr"
+meth [c ("P39")] = "polyreg"
+meth [c ("P16")] = "polyreg"
+meth [c ("P14_1B")] = "mean"
+meth [c ("P14_2B")] = "mean"
+meth [c ("P14_3B")] = "mean"
+meth [c ("P14_4B")] = "mean"
+meth [c ("P19_2B")] = "mean"
+meth [c ("P19_2_1B")] = "mean"
+meth [c ("P34_1")] = "logreg"
+meth [c ("P34_2")] = "logreg"
+meth [c ("P34_3")] = "logreg"
+meth [c ("P34_4")] = "logreg"
+meth [c ("P34_5")] = "logreg"
+meth [c ("P34_6")] = "logreg"
+meth [c ("P34_7")] = "logreg"
+meth [c ("P35_1")] = "logreg"
+meth [c ("P35_2")] = "logreg"
+meth [c ("P35_3")] = "logreg"
+meth [c ("P35_4")] = "logreg"
+meth [c ("P35_5")] = "logreg"
+meth [c ("P35_6")] = "logreg"
+meth [c ("P35_7")] = "logreg"
+meth [c ("P70")] = "logreg"
+meth [c ("P72")] = "mean"
+meth [c ("P73")] = "logreg"
+meth [c ("P76_3")] = "polr"
+meth [c ("P20_5")] = "mean"
+meth [c ("P29_2")] = "mean"
+meth [c ("P30_2")] = "mean"
+meth [c ("P80_5B")] = "mean"
+meth [c ("P2_0A")] = "mean"
+meth [c ("P2_1B")] = "mean"
+meth [c ("P2_2B")] = "mean"
+meth [c ("P2_3B")] = "mean"
+meth [c ("P21B")] = "mean"
+meth [c ("P24_0")] = "mean"
+```
+### 2.3.3 Correr algoritmo para imputación múltiple (m=5)
+```{r}
+print("2.3.3 Correr algoritmo para imputación múltiple (m=5)")
+set.seed(103)
+imputed = mice(phd.trans, method=meth, predictorMatrix=predM, m=5)
+```
+### 2.3.4 Crear dataset con datos imputados
+```{r}
+print("2.3.4 Crear dataset con datos imputados")
+phd.imp <- complete(imputed)
+
+write.csv(phd.imp, file="2.3.4_dataset_imputado.csv") # Exporta dataset con valores imputados
+```
+
+
+### 2.3.5 Verificar 'missing values' en el dataset después de imputación
+```{r}
+print("2.3.5 Verificar 'missing values' en el dataset después de imputación")
+sapply(phd.imp, function(x) sum(is.na(x)))
+```
+
+# PARTE 3. ANÁLISIS FACTORIAL EXPLORATORIO
+
+## 3.1 Renombrar, imprimir y resumir la estructura del dataset
+### 3.1.1 Imprimir la estructura del dataset a analizar
+```{r}
+print("3.1.1 Imprimir la estructura del dataset a analizar")
+phd.efa <- phd.imp
+str(phd.efa)
+```
+### 3.1.2 Imprimir resumen del dataset a analizar
+```{r}
+print("3.1.2 Imprimir resumen del dataset a analizar")
+summary(phd.efa)
+```
+
+## 3.2 Correr FAMD: análisis factorial exploratorio
+### 3.2.1 Crear elemento FAMD
+```{r}
+print("3.2.1 Crear elemento FAMD")
+res.famd <- FAMD(phd.efa, 
+                 graph=FALSE,
+                 ncp=10)
+```
+### 3.2.2 Imprimir tabla resumen FAMD
+```{r}
+print("3.2.2 Imprimir tabla resumen FAMD")
+summary.FAMD (res.famd)
+```
+### 3.2.3 Imprimir resumen general FAMD
+```{r}
+print("3.2.3 Imprimir resumen general FAMD")
+write.csv (summary.FAMD(res.famd))
+```
+## 3.2.4 Imprimir tabla de Eigenvalues
+```{r}
+print("3.2.4 Imprimir tabla de Eigenvalues")
+res.famd$eig
+```
+
+## 3.3 Matriz de contribución de las variables a las dimensiones
+### 3.3.1 Imprimir la matriz de la contribución de las variables a todas las dimensiones
+```{r}
+print("3.3.1 Imprimir la matriz de la contribución de las variables a todas las dimensiones")
+aux <- get_famd_var(res.famd)
+aux
+aux$contrib
+```
+#### 3.3.2 Variables que más contribuyen a las 3 primeras dimensiones
+```{r}
+print("3.3.2 Variables que más contribuyen a las 3 primeras dimensiones")
+i <- which(rowSums(aux$contrib[,1:3])/3>1/31*100)
+i
+df <- phd.efa[,i]
+```
+
+## 3.4 Visualización de la contribución de variables a las dimensiones
+```{r}
+
+# 3.4.1 Contribución de las variables a las 3 primeras dimensiones
+plot(res.famd2 <- FAMD(df)) 
+# 3.4.2 Scree plot de varianza explicada
+plot(fviz_screeplot (res.famd,addlabels=TRUE)) 
+# 3.4.3 Graficar las variables
+plot(fviz_famd_var (res.famd, repel = TRUE)) 
+# 3.4.3.1 Contribución a la primera dimensión
+plot(fviz_contrib (res.famd, "var", axes = 1)) 
+# 3.4.3.2 Contribución a la segunda dimensión
+plot(fviz_contrib (res.famd, "var", axes = 2)) 
+# 3.4.3.3 Contribución a la tercera dimensión
+plot(fviz_contrib (res.famd, "var", axes = 3)) 
+
+```
+
+
+## 3.5 Analizar por separado variables cuantitativas, cualitativas e individuales
+
+### 3.5.1 Análisis de variables cuantitativas
+#### 3.5.1.1 Extraer tabla de resultados de las variables cuantitativas
+```{r}
+quanti.var <- get_famd_var(res.famd, "quanti.var")
+print("3.5.1.1 Tabla de resultados de las variables cuantitativas")
+quanti.var$coord
+```
+#### 3.5.1.2 Gráficas de resultados variables cuantitativas
+```{r}
+
+# 3.5.1.2 Imprimir gráfica de resultados de las variables cuantitativas
+corrplot(quanti.var$coord,is.corr = FALSE)
+# 3.5.1.3 Analizar variables cuantitativas (dim 1 y 2)
+plot(fviz_famd_var (res.famd, "quanti.var", repel = TRUE)) 
+# 3.5.1.4 Analizar variables cuantitativas (dim 1 y 2 por cos2)
+plot(fviz_famd_var (res.famd, "quanti.var", repel = TRUE, col.var='cos2', gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))) 
+# 3.5.1.5 Analizar variables cuantitativas (dim 2 y 3)
+plot(fviz_famd_var (res.famd, "quanti.var", repel = TRUE, axes=2:3)) 
+# 3.5.1.6 Analizar variables cuantitativas (dim 2 y 3 por cos2)
+plot(fviz_famd_var (res.famd, "quanti.var", axes=2:3, repel = TRUE, col.var='cos2', gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07")))
+
+```
+
+### 3.5.2 Análisis de variables cualitativas
+#### 3.5.2.1 Extraer tabla de resultados de las variables cualiitativas
+```{r}
+quali.var <- get_famd_var(res.famd, "quali.var")
+print("3.5.2.1 Tabla de resultados de las variables cualitativas")
+quali.var$coord
+```
+#### 3.5.2.1 Gráficas de resultados variables cualitativas
+```{r}
+
+# 3.5.2.2 Gráficas de resultados variables cualitativas
+corrplot(quali.var$coord,is.corr = FALSE, tl.cex=0.5)
+# 3.5.2.3 Analizar variables cualitativas (dim 1 y 2)
+plot(fviz_famd_var (res.famd, "quali.var", repel = TRUE))
+# 3.5.2.4 Analizar variables cualitativas (dim 1 y 2 por cos2)
+plot(fviz_famd_var (res.famd, "quali.var", repel = TRUE, col.var='cos2', gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07")))
+# 3.5.2.5 Analizar variables cualtativas (dim 2 y 3)
+plot(fviz_famd_var (res.famd, "quali.var", repel = TRUE, axes=2:3))
+# 3.5.2.6 Analizar variables cualiativas (dim 2 y 3 por cos2)
+plot(fviz_famd_var (res.famd, "quali.var", axes=2:3, repel = TRUE, col.var='cos2', gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07")))
+
+```
+
+## 3.5.3 Análisis de individuos
+```{r}
+
+# 3.5.3.1 Imprimir gráfica de ejes de individuos
+plot(fviz_famd_ind(res.famd, repel = TRUE))
+# 3.5.3.2 Imprimir gráfica de ejes de indiviuales (cos2)
+plot(fviz_famd_ind(res.famd,repel = TRUE, col.ind='cos2', gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07")))
+
+```
+
+## 3.6 Análisis de cluster de las variables categóricas
+
+### 3.6.1 Imprimir tabla de resultados FAMD para seleccionar variables categóricas a visualizar
+```{r}
+print("3.6.1 Imprimir tabla de resultados FAMD para seleccionar variables categóricas a visualizar")
+summary.FAMD (res.famd)
+```
+### 3.6.2 Analizar variables mediante clusters (gráficas de elipses)
+```{r}
+
+# 3.6.2.1 Cluster variable P39
+plot(fviz_ellipses(res.famd, c("P39"), repel = TRUE))
+# 3.6.2.2 Cluster variable P33
+plot(fviz_ellipses(res.famd, c("P33"), repel = TRUE))
+# 3.6.2.3 Cluster variable P36
+plot(fviz_ellipses(res.famd, c("P36"), repel = TRUE))
+# 3.6.2.4 Cluster variable P37
+plot(fviz_ellipses(res.famd, c("P37"), repel = TRUE))
+# 3.6.2.5 Cluster variable P38
+plot(fviz_ellipses(res.famd, c("P38"), repel = TRUE))
+# 3.6.2.6 Cluster variable P39
+plot(fviz_ellipses(res.famd, c("P39"), repel = TRUE))
+# 3.6.2.7 Cluster variable P16
+plot(fviz_ellipses(res.famd, c("P16"), repel = TRUE))
+# 3.6.2.8 Cluster variable P34_1
+plot(fviz_ellipses(res.famd, c("P34_1"), repel = TRUE))
+# 3.6.2.9 Cluster variable P34_2
+plot(fviz_ellipses(res.famd, c("P34_2"), repel = TRUE))
+# 3.6.2.10 Cluster variable P34_3
+plot(fviz_ellipses(res.famd, c("P34_3"), repel = TRUE))
+# 3.6.2.11 Cluster variable P34_4
+plot(fviz_ellipses(res.famd, c("P34_4"), repel = TRUE))
+# 3.6.2.12 Cluster variable P34_5
+plot(fviz_ellipses(res.famd, c("P34_5"), repel = TRUE))
+# 3.6.2.13 Cluster variable P34_6
+plot(fviz_ellipses(res.famd, c("P34_6"), repel = TRUE))
+# 3.6.2.14 Cluster variable P34_7
+plot(fviz_ellipses(res.famd, c("P34_7"), repel = TRUE))
+# 3.6.2.15 Cluster variable P35_1
+plot(fviz_ellipses(res.famd, c("P35_1"), repel = TRUE))
+# 3.6.2.16 Cluster variable P35_2
+plot(fviz_ellipses(res.famd, c("P35_2"), repel = TRUE))
+# 3.6.2.17 Cluster variable P35_3
+plot(fviz_ellipses(res.famd, c("P35_3"), repel = TRUE))
+# 3.6.2.18 Cluster variable P35_4
+plot(fviz_ellipses(res.famd, c("P35_4"), repel = TRUE))
+# 3.6.2.19 Cluster variable P35_5
+plot(fviz_ellipses(res.famd, c("P35_5"), repel = TRUE))
+# 3.6.2.20 Cluster variable P35_6
+plot(fviz_ellipses(res.famd, c("P35_6"), repel = TRUE))
+# 3.6.2.21 Cluster variable P35_7
+plot(fviz_ellipses(res.famd, c("P35_7"), repel = TRUE))
+# 3.6.2.22 Cluster variable P70
+plot(fviz_ellipses(res.famd, c("P70"), repel = TRUE))
+# 3.6.2.23 Cluster variable P73
+plot(fviz_ellipses(res.famd, c("P73"), repel = TRUE))
+# 3.6.2.24 Cluster variable P6_3
+plot(fviz_ellipses(res.famd, c("P76_3"), repel = TRUE))
+
+```
